@@ -31,6 +31,7 @@ interface ProgressData {
   lastPlayed: number;
   masteredPatterns: string[];
   strugglingPatterns: string[];
+  bestTime: number | null;
 }
 
 type GameState = "loading" | "playing" | "success" | "try-again" | "show-answer" | "ended";
@@ -60,6 +61,7 @@ const getDefaultProgress = (): ProgressData => ({
   lastPlayed: Date.now(),
   masteredPatterns: [],
   strugglingPatterns: [],
+  bestTime: null,
 });
 
 export default function AoifeMathGame() {
@@ -134,11 +136,11 @@ export default function AoifeMathGame() {
     const loadedProgress = loadProgress();
     setProgress(loadedProgress);
 
-    // Generate 10 subtraction questions
+    // Generate 20 subtraction questions
     const newQuestions: Question[] = [];
     const usedIds = new Set<string>();
 
-    while (newQuestions.length < 10) {
+    while (newQuestions.length < 20) {
       const q = generateQuestion();
       if (!usedIds.has(q.id)) {
         newQuestions.push(q);
@@ -203,12 +205,12 @@ export default function AoifeMathGame() {
       setGameState("success");
 
       // If this is the last question, stop timer
-      if (currentQuestionIndex === 9) {
+      if (currentQuestionIndex === 19) {
         stopTimer();
       }
 
       setTimeout(() => {
-        if (currentQuestionIndex < 9) {
+        if (currentQuestionIndex < 19) {
           setCurrentQuestionIndex((prev) => prev + 1);
           setUserAnswer(null);
           setGameState("playing");
@@ -216,6 +218,16 @@ export default function AoifeMathGame() {
           setMessageType("none");
           setAttempt(1);
         } else {
+          // Save progress with score and best time
+          const newProgress = { ...progress };
+          newProgress.totalCorrect += score + 1; // +1 for this correct answer
+          newProgress.lastPlayed = Date.now();
+          // Update best time if this is faster or no best time exists
+          if (newProgress.bestTime === null || elapsedTime < newProgress.bestTime) {
+            newProgress.bestTime = elapsedTime;
+          }
+          setProgress(newProgress);
+          saveProgress(newProgress);
           setGameState("ended");
         }
       }, 1500);
@@ -238,12 +250,12 @@ export default function AoifeMathGame() {
         setShowAnswer(true);
 
         // If this is the last question, stop timer
-        if (currentQuestionIndex === 9) {
+        if (currentQuestionIndex === 19) {
           stopTimer();
         }
 
         setTimeout(() => {
-          if (currentQuestionIndex < 9) {
+          if (currentQuestionIndex < 19) {
             setCurrentQuestionIndex((prev) => prev + 1);
             setUserAnswer(null);
             setGameState("playing");
@@ -252,6 +264,12 @@ export default function AoifeMathGame() {
             setAttempt(1);
             setShowAnswer(false);
           } else {
+            // Save progress with wrong answer
+            const newProgress = { ...progress };
+            newProgress.totalIncorrect += 1;
+            newProgress.lastPlayed = Date.now();
+            setProgress(newProgress);
+            saveProgress(newProgress);
             setGameState("ended");
           }
         }, 2500);
@@ -280,9 +298,9 @@ export default function AoifeMathGame() {
   if (gameState === "ended") {
     let emoji = "";
     let subtitle = "";
-    if (score === 10) { emoji = "🏆"; subtitle = "You got every single one right!"; }
-    else if (score >= 8) { emoji = "⭐"; subtitle = "You're getting really good at this!"; }
-    else if (score >= 6) { emoji = "💜"; subtitle = "Practice makes perfect!"; }
+    if (score === 20) { emoji = "🏆"; subtitle = "You got every single one right!"; }
+    else if (score >= 16) { emoji = "⭐"; subtitle = "You're getting really good at this!"; }
+    else if (score >= 12) { emoji = "💜"; subtitle = "Practice makes perfect!"; }
     else { emoji = "🌸"; subtitle = "Keep trying, you're improving!"; }
 
     return (
@@ -294,13 +312,19 @@ export default function AoifeMathGame() {
           <div className="bg-gradient-to-br from-pink-50 to-purple-50 rounded-2xl p-6 mb-6 border-2 border-pink-100">
             <p className="text-sm font-bold text-purple-400 uppercase tracking-widest mb-1">Score</p>
             <p className="text-7xl font-black text-pink-600">
-              {score}<span className="text-3xl text-purple-400"> / 10</span>
+              {score}<span className="text-3xl text-purple-400"> / 20</span>
             </p>
           </div>
-          <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl p-4 mb-6 border-2 border-blue-100">
-            <p className="text-sm font-bold text-blue-400 uppercase tracking-widest mb-1">Time</p>
+          <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl p-4 mb-4 border-2 border-blue-100">
+            <p className="text-sm font-bold text-blue-400 uppercase tracking-widest mb-1">Current Time</p>
             <p className="text-4xl font-black text-blue-600">{formatTime(elapsedTime)}</p>
           </div>
+          {progress.bestTime && (
+            <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-3 mb-6 border-2 border-green-100">
+              <p className="text-sm font-bold text-green-400 uppercase tracking-widest mb-1">Best Time Ever</p>
+              <p className="text-2xl font-black text-green-600">{formatTime(progress.bestTime)}</p>
+            </div>
+          )}
           <div className="flex justify-center gap-6 text-sm font-bold mb-8">
             <span className="text-green-500">✓ {progress.totalCorrect} correct</span>
             <span className="text-pink-400">✗ {progress.totalIncorrect} wrong</span>
@@ -326,12 +350,12 @@ export default function AoifeMathGame() {
       {/* ── Progress bar with timer ── */}
       <div className="w-full max-w-2xl flex items-center gap-4">
         <span className="text-pink-500 font-black text-lg tabular-nums whitespace-nowrap">
-          {currentQuestionIndex + 1}<span className="text-pink-300"> / 10</span>
+          {currentQuestionIndex + 1}<span className="text-pink-300"> / 20</span>
         </span>
         <div className="flex-1 h-4 bg-white/70 rounded-full overflow-hidden shadow-inner border-2 border-pink-100">
           <div
             className="h-full bg-gradient-to-r from-pink-400 via-fuchsia-400 to-purple-400 rounded-full transition-all duration-700 ease-out"
-            style={{ width: `${((currentQuestionIndex + 1) / 10) * 100}%` }}
+            style={{ width: `${((currentQuestionIndex + 1) / 20) * 100}%` }}
           />
         </div>
         <span className="text-purple-500 font-black text-lg tabular-nums whitespace-nowrap">{score} ⭐</span>
