@@ -40,13 +40,11 @@ type MessageType = "none" | "try-again" | "correct" | "wrong" | "show-answer";
 
 
 const generateQuestion = (): Question => {
-  // Generate subtraction where difference is 1-4 and num2 is always >= 1
-  // Answer is 1-4, so num1 must be >= answer + 1 to keep num2 positive
-  const answer = Math.floor(Math.random() * 4) + 1; // 1-4
-  const minNum1 = answer + 1;
-  const maxNum1 = 9;
-  const num1 = Math.floor(Math.random() * (maxNum1 - minNum1 + 1)) + minNum1; // answer+1 to 9
-  const num2 = num1 - answer; // Always >= 1 now
+  // Generate subtraction where both num1 and num2 are under 11 (0-10)
+  // num1 must be >= num2 so answer is non-negative
+  const num1 = Math.floor(Math.random() * 11); // 0-10
+  const num2 = Math.floor(Math.random() * (num1 + 1)); // 0 to num1
+  const answer = num1 - num2;
 
   return { num1, num2, answer, id: `${num1}-${num2}` };
 };
@@ -412,15 +410,15 @@ export default function AoifeMathGame() {
         )}
       </div>
 
-      {/* ── Answer buttons (1-4 only) ── */}
+      {/* ── Answer buttons (0-10) ── */}
       <div className="w-full max-w-2xl flex flex-col gap-3">
         {gameState === "playing" && (
-          <div className="grid grid-cols-4 gap-3">
-            {[1, 2, 3, 4].map((num) => (
+          <div className="grid grid-cols-5 gap-2">
+            {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
               <button
                 key={num}
                 onClick={() => handleAnswer(num)}
-                className="bg-white border-b-[5px] border-pink-200 rounded-2xl py-6 text-5xl font-black text-pink-500 shadow-md active:translate-y-[3px] active:border-b-[1px] active:shadow-sm transition-all duration-75 font-bubble select-none"
+                className="bg-white border-b-[5px] border-pink-200 rounded-2xl py-5 text-4xl font-black text-pink-500 shadow-md active:translate-y-[3px] active:border-b-[1px] active:shadow-sm transition-all duration-75 font-bubble select-none"
               >
                 {num}
               </button>
