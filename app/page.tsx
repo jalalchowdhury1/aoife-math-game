@@ -227,6 +227,12 @@ export default function AoifeMathGame() {
       [questionId]: questionTime
     }));
 
+    // Track how many times this question was shown in session
+    setSessionTimesShown(prev => ({
+      ...prev,
+      [questionId]: (prev[questionId] || 0) + 1
+    }));
+
     setUserAnswer(answer);
 
     const correct = answer === currentQuestion?.answer;
