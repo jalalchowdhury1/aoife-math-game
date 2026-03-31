@@ -88,6 +88,7 @@ export default function AoifeMathGame() {
   const [sessionTimesShown, setSessionTimesShown] = useState<Record<string, number>>({});
   const [showAdmin, setShowAdmin] = useState(false);
   const [repeatStruggling, setRepeatStruggling] = useState(true);
+  const [selectedPatterns, setSelectedPatterns] = useState<string[]>([]);
 
   const loadProgress = useCallback((): ProgressData => {
     try {
@@ -514,23 +515,43 @@ export default function AoifeMathGame() {
 
       {/* ── Admin Panel ── */}
       {showAdmin && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-6">
-          <div className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl">
+        <div
+          className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-6"
+          onClick={() => setShowAdmin(false)}
+        >
+          <div
+            className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-black text-gray-800">Admin Panel 👨‍💻</h2>
               <button onClick={() => setShowAdmin(false)} className="text-gray-400 hover:text-gray-600 text-2xl">×</button>
             </div>
 
-            {/* Struggling patterns */}
+            {/* Struggling patterns with individual toggles */}
             <div className="mb-4">
-              <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-2">Slowest Equations</h3>
+              <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-2">Select equations to repeat</h3>
               <div className="bg-pink-50 rounded-xl p-3 space-y-2">
                 {progress.strugglingPatterns.length > 0 ? (
                   progress.strugglingPatterns.map((pattern) => {
                     const [n1, n2] = pattern.split('-').map(Number);
+                    const isSelected = selectedPatterns.includes(pattern);
                     return (
-                      <div key={pattern} className="flex justify-between text-lg font-black">
-                        <span className="text-pink-600">{n1} − {n2} = {n1 - n2}</span>
+                      <div
+                        key={pattern}
+                        className={`flex justify-between items-center p-2 rounded-lg cursor-pointer transition-colors ${isSelected ? 'bg-pink-200' : 'bg-pink-100 hover:bg-pink-150'}`}
+                        onClick={() => {
+                          setSelectedPatterns(prev =>
+                            prev.includes(pattern)
+                              ? prev.filter(p => p !== pattern)
+                              : [...prev, pattern]
+                          );
+                        }}
+                      >
+                        <span className="text-lg font-black text-pink-600">{n1} − {n2} = {n1 - n2}</span>
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isSelected ? 'bg-green-500' : 'bg-gray-300'}`}>
+                          {isSelected ? '✓' : ''}
+                        </div>
                       </div>
                     );
                   })
@@ -540,9 +561,9 @@ export default function AoifeMathGame() {
               </div>
             </div>
 
-            {/* Toggle repeat */}
+            {/* Toggle repeat selected */}
             <div className="flex items-center justify-between bg-blue-50 rounded-xl p-3">
-              <span className="font-bold text-blue-600">Repeat difficult ones</span>
+              <span className="font-bold text-blue-600">Repeat selected ({selectedPatterns.length})</span>
               <button
                 onClick={() => {
                   setRepeatStruggling(!repeatStruggling);
