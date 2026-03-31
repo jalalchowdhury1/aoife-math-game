@@ -253,6 +253,19 @@ export default function AoifeMathGame() {
       setMessageType("correct");
       setGameState("success");
 
+      // Update questionStats for this equation
+      const updatedStats = { ...progress.questionStats };
+      const existing = updatedStats[questionId] || { correct: 0, incorrect: 0, lastAttempt: 0, timesShown: 0, totalTime: 0, avgTime: 0, timesShownInCurrentSession: 0 };
+      updatedStats[questionId] = {
+        correct: existing.correct + 1,
+        incorrect: existing.incorrect,
+        lastAttempt: Date.now(),
+        timesShown: existing.timesShown + 1,
+        totalTime: existing.totalTime + questionTime,
+        avgTime: (existing.totalTime + questionTime) / (existing.correct + 1),
+        timesShownInCurrentSession: (existing.timesShownInCurrentSession || 0) + 1
+      };
+
       // If this is the last question, stop timer
       if (currentQuestionIndex === 19) {
         stopTimer();
@@ -270,11 +283,11 @@ export default function AoifeMathGame() {
           setMessageType("none");
           setAttempt(1);
         } else {
-          // Calculate and save slowest equations
-          const slowestEquations = calculateSlowestEquations(currentQuestionTimes, sessionTimesShown, progress.questionStats, sessionIncorrectIds);
+          // Calculate and save slowest equations using updated stats
+          const slowestEquations = calculateSlowestEquations(currentQuestionTimes, sessionTimesShown, updatedStats, sessionIncorrectIds);
 
           // Save progress with score, best time, and slowest equations
-          const newProgress = { ...progress };
+          const newProgress = { ...progress, questionStats: updatedStats };
           newProgress.totalCorrect += score + 1; // +1 for this correct answer
           newProgress.lastPlayed = Date.now();
           newProgress.strugglingPatterns = slowestEquations;
@@ -319,6 +332,19 @@ export default function AoifeMathGame() {
           // Update question start time for next question
           questionStartTimeRef.current = Date.now();
 
+          // Update questionStats for this equation
+          const updatedStats = { ...progress.questionStats };
+          const existing = updatedStats[questionId] || { correct: 0, incorrect: 0, lastAttempt: 0, timesShown: 0, totalTime: 0, avgTime: 0, timesShownInCurrentSession: 0 };
+          updatedStats[questionId] = {
+            correct: existing.correct,
+            incorrect: existing.incorrect + 1,
+            lastAttempt: Date.now(),
+            timesShown: existing.timesShown + 1,
+            totalTime: existing.totalTime + questionTime,
+            avgTime: existing.avgTime,
+            timesShownInCurrentSession: (existing.timesShownInCurrentSession || 0) + 1
+          };
+
           if (currentQuestionIndex < 19) {
             setCurrentQuestionIndex((prev) => prev + 1);
             setUserAnswer(null);
@@ -328,11 +354,11 @@ export default function AoifeMathGame() {
             setAttempt(1);
             setShowAnswer(false);
           } else {
-            // Calculate and save slowest equations
-            const slowestEquations = calculateSlowestEquations(currentQuestionTimes, sessionTimesShown, progress.questionStats, sessionIncorrectIds);
+            // Calculate and save slowest equations using updated stats
+            const slowestEquations = calculateSlowestEquations(currentQuestionTimes, sessionTimesShown, updatedStats, sessionIncorrectIds);
 
             // Save progress with wrong answer and slowest equations
-            const newProgress = { ...progress };
+            const newProgress = { ...progress, questionStats: updatedStats };
             newProgress.totalIncorrect += 1;
             newProgress.lastPlayed = Date.now();
             newProgress.strugglingPatterns = slowestEquations;
