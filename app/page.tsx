@@ -89,6 +89,7 @@ export default function AoifeMathGame() {
   const [showAdmin, setShowAdmin] = useState(false);
   const [repeatStruggling, setRepeatStruggling] = useState(true);
   const [selectedPatterns, setSelectedPatterns] = useState<string[]>([]);
+  const [sessionIncorrectIds, setSessionIncorrectIds] = useState<string[]>([]);
 
   const loadProgress = useCallback((): ProgressData => {
     try {
@@ -194,6 +195,7 @@ export default function AoifeMathGame() {
     setElapsedTime(0);
     setCurrentQuestionTimes({});
     setSessionTimesShown({});
+    setSessionIncorrectIds([]);
     startTimeRef.current = null;
     questionStartTimeRef.current = Date.now();
     if (timerRef.current) {
@@ -269,7 +271,7 @@ export default function AoifeMathGame() {
           setAttempt(1);
         } else {
           // Calculate and save slowest equations
-          const slowestEquations = calculateSlowestEquations(currentQuestionTimes, sessionTimesShown, progress.questionStats);
+          const slowestEquations = calculateSlowestEquations(currentQuestionTimes, sessionTimesShown, progress.questionStats, sessionIncorrectIds);
 
           // Save progress with score, best time, and slowest equations
           const newProgress = { ...progress };
@@ -298,6 +300,11 @@ export default function AoifeMathGame() {
           setMessageType("none");
         }, 1500);
       } else {
+        // Track incorrect answer for struggling patterns
+        setSessionIncorrectIds(prev =>
+          prev.includes(questionId) ? prev : [...prev, questionId]
+        );
+
         setMessage(`The correct answer is ${currentQuestion?.answer}!`);
         setMessageType("show-answer");
         setGameState("show-answer");
@@ -322,7 +329,7 @@ export default function AoifeMathGame() {
             setShowAnswer(false);
           } else {
             // Calculate and save slowest equations
-            const slowestEquations = calculateSlowestEquations(currentQuestionTimes, sessionTimesShown, progress.questionStats);
+            const slowestEquations = calculateSlowestEquations(currentQuestionTimes, sessionTimesShown, progress.questionStats, sessionIncorrectIds);
 
             // Save progress with wrong answer and slowest equations
             const newProgress = { ...progress };
@@ -338,15 +345,28 @@ export default function AoifeMathGame() {
     }
   };
 
-  // Calculate the slowest equations that have been shown 3+ times
+  // Calculate equations to repeat: first mistakes, then slowest by time
   const calculateSlowestEquations = (
     currentTimes: Record<string, number>,
     sessionShown: Record<string, number>,
-    existingStats: Record<string, QuestionStats>
+    existingStats: Record<string, QuestionStats>,
+    incorrectIds: string[] // IDs of equations answered incorrectly
   ): string[] => {
-    const allCandidates: { id: string; avgTime: number; timesShown: number }[] = [];
+    const result: string[] = [];
+    const addedIds = new Set<string>();
 
-    // Get all equations with their times shown
+    // First: Add all equations that were answered incorrectly (up to 5)
+    for (const id of incorrectIds) {
+      if (result.length >= 5) break;
+      if (!addedIds.has(id)) {
+        result.push(id);
+        addedIds.add(id);
+      }
+    }
+
+    // Second: Fill remaining slots with slowest equations by time
+    const allCandidates: { id: string; avgTime: number }[] = [];
+
     const allIds = new Set([
       ...Object.keys(currentTimes),
       ...Object.keys(sessionShown),
@@ -354,25 +374,28 @@ export default function AoifeMathGame() {
     ]);
 
     for (const id of allIds) {
+      if (addedIds.has(id)) continue; // Skip already added
       const existing = existingStats[id];
       const sessionTime = currentTimes[id];
-      const sessionCount = sessionShown[id] || 0;
-
-      // Total times shown = existing timesShown + session count
-      const totalShown = (existing?.timesShown || 0) + sessionCount;
-
-      // Include equations from current session OR shown 3+ times overall
-      if (sessionCount > 0 || totalShown >= 3) {
-        const avgTime = sessionTime || existing?.avgTime || 0;
-        allCandidates.push({ id, avgTime, timesShown: totalShown });
+      const avgTime = sessionTime || existing?.avgTime || 0;
+      if (avgTime > 0) {
+        allCandidates.push({ id, avgTime });
       }
     }
 
     // Sort by slowest (highest time) first
     allCandidates.sort((a, b) => b.avgTime - a.avgTime);
 
-    // Return top 5 slowest
-    return allCandidates.slice(0, 5).map(item => item.id);
+    // Add slowest to fill up to 5
+    for (const candidate of allCandidates) {
+      if (result.length >= 5) break;
+      if (!addedIds.has(candidate.id)) {
+        result.push(candidate.id);
+        addedIds.add(candidate.id);
+      }
+    }
+
+    return result;
   };
 
   const handlePlayAgain = () => {
