@@ -84,6 +84,8 @@ export default function AoifeMathGame() {
   const startTimeRef = useRef<number | null>(null);
   const questionStartTimeRef = useRef<number>(0);
   const [currentQuestionTimes, setCurrentQuestionTimes] = useState<Record<string, number>>({});
+  const [showAdmin, setShowAdmin] = useState(false);
+  const [repeatStruggling, setRepeatStruggling] = useState(true);
 
   const loadProgress = useCallback((): ProgressData => {
     try {
@@ -139,23 +141,25 @@ export default function AoifeMathGame() {
     const loadedProgress = loadProgress();
     setProgress(loadedProgress);
 
-    // Generate 20 subtraction questions - include difficult ones first
+    // Generate 20 subtraction questions
     const newQuestions: Question[] = [];
     const usedIds = new Set<string>();
 
-    // First, add the struggling patterns from previous sessions
-    const strugglingPatterns = loadedProgress.strugglingPatterns || [];
-    for (const pattern of strugglingPatterns) {
-      const [num1, num2] = pattern.split('-').map(Number);
-      if (num1 !== undefined && num2 !== undefined && num1 >= num2) {
-        const q: Question = {
-          num1,
-          num2,
-          answer: num1 - num2,
-          id: pattern
-        };
-        newQuestions.push(q);
-        usedIds.add(pattern);
+    // Only add struggling patterns if repeat is enabled
+    if (repeatStruggling) {
+      const strugglingPatterns = loadedProgress.strugglingPatterns || [];
+      for (const pattern of strugglingPatterns) {
+        const [num1, num2] = pattern.split('-').map(Number);
+        if (num1 !== undefined && num2 !== undefined && num1 >= num2) {
+          const q: Question = {
+            num1,
+            num2,
+            answer: num1 - num2,
+            id: pattern
+          };
+          newQuestions.push(q);
+          usedIds.add(pattern);
+        }
       }
     }
 
@@ -192,7 +196,7 @@ export default function AoifeMathGame() {
       clearInterval(timerRef.current);
       timerRef.current = null;
     }
-  }, [loadProgress]);
+  }, [loadProgress, repeatStruggling]);
 
   useEffect(() => {
     initializeGame();
@@ -481,6 +485,59 @@ export default function AoifeMathGame() {
         )}
       </div>
 
+      {/* ── Secret admin dot ── */}
+      <button
+        onClick={() => setShowAdmin(!showAdmin)}
+        className="fixed bottom-2 right-2 w-3 h-3 rounded-full bg-gray-300 opacity-20 hover:opacity-100 transition-opacity z-50"
+        aria-label="Admin panel"
+      />
+
+      {/* ── Admin Panel ── */}
+      {showAdmin && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-6">
+          <div className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-black text-gray-800">Admin Panel 👨‍💻</h2>
+              <button onClick={() => setShowAdmin(false)} className="text-gray-400 hover:text-gray-600 text-2xl">×</button>
+            </div>
+
+            {/* Struggling patterns */}
+            <div className="mb-4">
+              <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-2">Slowest Equations</h3>
+              <div className="bg-pink-50 rounded-xl p-3 space-y-2">
+                {progress.strugglingPatterns.length > 0 ? (
+                  progress.strugglingPatterns.map((pattern) => {
+                    const [n1, n2] = pattern.split('-').map(Number);
+                    return (
+                      <div key={pattern} className="flex justify-between text-lg font-black">
+                        <span className="text-pink-600">{n1} − {n2} = {n1 - n2}</span>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <p className="text-gray-400 text-sm">Play a few rounds to see struggling patterns</p>
+                )}
+              </div>
+            </div>
+
+            {/* Toggle repeat */}
+            <div className="flex items-center justify-between bg-blue-50 rounded-xl p-3">
+              <span className="font-bold text-blue-600">Repeat difficult ones</span>
+              <button
+                onClick={() => {
+                  setRepeatStruggling(!repeatStruggling);
+                }}
+                className={`w-14 h-8 rounded-full transition-colors ${repeatStruggling ? 'bg-green-500' : 'bg-gray-300'}`}
+              >
+                <div className={`w-6 h-6 bg-white rounded-full shadow transition-transform ${repeatStruggling ? 'translate-x-7' : 'translate-x-1'}`} />
+              </button>
+            </div>
+
+            <p className="text-xs text-gray-400 mt-4 text-center">Tap outside to close</p>
+          </div>
+        </div>
+      )}
+
       {/* ── Numpad ── */}
       <div className="w-full max-w-2xl flex flex-col gap-3">
         {gameState === "playing" && (
@@ -556,8 +613,8 @@ export default function AoifeMathGame() {
               }}
               disabled={userAnswer === null}
               className={`border-b-[5px] rounded-2xl py-5 text-4xl font-black shadow-md active:translate-y-[3px] active:border-b-[1px] active:shadow-sm transition-all duration-75 font-bubble select-none ${userAnswer !== null
-                  ? 'bg-green-100 border-green-300 text-green-600'
-                  : 'bg-gray-100 border-gray-300 text-gray-400'
+                ? 'bg-green-100 border-green-300 text-green-600'
+                : 'bg-gray-100 border-gray-300 text-gray-400'
                 }`}
             >
               ✔️
