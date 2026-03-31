@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 // Declare global confetti
 declare global {
   interface Window {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     confetti: any;
   }
 }
@@ -21,6 +22,8 @@ interface QuestionStats {
   incorrect: number;
   lastAttempt: number;
   timesShown: number;
+  totalTime: number; // total time spent on this equation in ms
+  avgTime: number;   // average time per correct answer
 }
 
 interface ProgressData {
@@ -40,9 +43,9 @@ type MessageType = "none" | "try-again" | "correct" | "wrong" | "show-answer";
 
 
 const generateQuestion = (): Question => {
-  // Generate subtraction where both num1 and num2 are under 11 (0-10)
+  // Generate subtraction where both num1 and num2 are up to 20
   // num1 must be >= num2 so answer is non-negative
-  const num1 = Math.floor(Math.random() * 11); // 0-10
+  const num1 = Math.floor(Math.random() * 21); // 0-20
   const num2 = Math.floor(Math.random() * (num1 + 1)); // 0 to num1
   const answer = num1 - num2;
 
@@ -79,6 +82,8 @@ export default function AoifeMathGame() {
   const [elapsedTime, setElapsedTime] = useState<number>(0);
   const timerRef = useRef<number | null>(null);
   const startTimeRef = useRef<number | null>(null);
+  const questionStartTimeRef = useRef<number>(0);
+  const [currentQuestionTimes, setCurrentQuestionTimes] = useState<Record<string, number>>({});
 
   const loadProgress = useCallback((): ProgressData => {
     try {
@@ -134,10 +139,27 @@ export default function AoifeMathGame() {
     const loadedProgress = loadProgress();
     setProgress(loadedProgress);
 
-    // Generate 20 subtraction questions
+    // Generate 20 subtraction questions - include difficult ones first
     const newQuestions: Question[] = [];
     const usedIds = new Set<string>();
 
+    // First, add the struggling patterns from previous sessions
+    const strugglingPatterns = loadedProgress.strugglingPatterns || [];
+    for (const pattern of strugglingPatterns) {
+      const [num1, num2] = pattern.split('-').map(Number);
+      if (num1 !== undefined && num2 !== undefined && num1 >= num2) {
+        const q: Question = {
+          num1,
+          num2,
+          answer: num1 - num2,
+          id: pattern
+        };
+        newQuestions.push(q);
+        usedIds.add(pattern);
+      }
+    }
+
+    // Then fill the rest with random questions
     while (newQuestions.length < 20) {
       const q = generateQuestion();
       if (!usedIds.has(q.id)) {
@@ -146,7 +168,7 @@ export default function AoifeMathGame() {
       }
     }
 
-    // Shuffle questions
+    // Shuffle questions (struggling patterns will be mixed in)
     for (let i = newQuestions.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [newQuestions[i], newQuestions[j]] = [newQuestions[j], newQuestions[i]];
@@ -163,7 +185,9 @@ export default function AoifeMathGame() {
     setShowAnswer(false);
     setTimerStarted(false);
     setElapsedTime(0);
+    setCurrentQuestionTimes({});
     startTimeRef.current = null;
+    questionStartTimeRef.current = Date.now();
     if (timerRef.current) {
       clearInterval(timerRef.current);
       timerRef.current = null;
@@ -183,6 +207,17 @@ export default function AoifeMathGame() {
     if (!timerStarted) {
       startTimer();
     }
+
+    // Calculate time spent on this question
+    // eslint-disable-next-line react-hooks/purity
+    const questionTime = Date.now() - questionStartTimeRef.current;
+    const questionId = currentQuestion?.id || "";
+
+    // Track time for this question
+    setCurrentQuestionTimes(prev => ({
+      ...prev,
+      [questionId]: questionTime
+    }));
 
     setUserAnswer(answer);
 
@@ -208,6 +243,9 @@ export default function AoifeMathGame() {
       }
 
       setTimeout(() => {
+        // Update question start time for next question
+        questionStartTimeRef.current = Date.now();
+
         if (currentQuestionIndex < 19) {
           setCurrentQuestionIndex((prev) => prev + 1);
           setUserAnswer(null);
@@ -216,10 +254,14 @@ export default function AoifeMathGame() {
           setMessageType("none");
           setAttempt(1);
         } else {
-          // Save progress with score and best time
+          // Calculate and save slowest equations
+          const slowestEquations = calculateSlowestEquations(currentQuestionTimes, progress.questionStats);
+
+          // Save progress with score, best time, and slowest equations
           const newProgress = { ...progress };
           newProgress.totalCorrect += score + 1; // +1 for this correct answer
           newProgress.lastPlayed = Date.now();
+          newProgress.strugglingPatterns = slowestEquations;
           // Update best time if this is faster or no best time exists
           if (newProgress.bestTime === null || elapsedTime < newProgress.bestTime) {
             newProgress.bestTime = elapsedTime;
@@ -253,6 +295,9 @@ export default function AoifeMathGame() {
         }
 
         setTimeout(() => {
+          // Update question start time for next question
+          questionStartTimeRef.current = Date.now();
+
           if (currentQuestionIndex < 19) {
             setCurrentQuestionIndex((prev) => prev + 1);
             setUserAnswer(null);
@@ -262,10 +307,14 @@ export default function AoifeMathGame() {
             setAttempt(1);
             setShowAnswer(false);
           } else {
-            // Save progress with wrong answer
+            // Calculate and save slowest equations
+            const slowestEquations = calculateSlowestEquations(currentQuestionTimes, progress.questionStats);
+
+            // Save progress with wrong answer and slowest equations
             const newProgress = { ...progress };
             newProgress.totalIncorrect += 1;
             newProgress.lastPlayed = Date.now();
+            newProgress.strugglingPatterns = slowestEquations;
             setProgress(newProgress);
             saveProgress(newProgress);
             setGameState("ended");
@@ -273,6 +322,28 @@ export default function AoifeMathGame() {
         }, 2500);
       }
     }
+  };
+
+  // Calculate the slowest equations to repeat
+  const calculateSlowestEquations = (
+    currentTimes: Record<string, number>,
+    existingStats: Record<string, QuestionStats>
+  ): string[] => {
+    const allTimes: { id: string; avgTime: number }[] = [];
+
+    // Get times from this session
+    for (const [id, time] of Object.entries(currentTimes)) {
+      const existing = existingStats[id];
+      // Use existing avgTime if available, otherwise use current session time
+      const avgTime = existing?.avgTime || time;
+      allTimes.push({ id, avgTime });
+    }
+
+    // Sort by slowest (highest time) first
+    allTimes.sort((a, b) => b.avgTime - a.avgTime);
+
+    // Return top 3 slowest
+    return allTimes.slice(0, 3).map(item => item.id);
   };
 
   const handlePlayAgain = () => {
@@ -413,12 +484,12 @@ export default function AoifeMathGame() {
       {/* ── Answer buttons (0-10) ── */}
       <div className="w-full max-w-2xl flex flex-col gap-3">
         {gameState === "playing" && (
-          <div className="grid grid-cols-5 gap-2">
-            {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((num) => (
+          <div className="grid grid-cols-7 gap-2">
+            {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20].map((num) => (
               <button
                 key={num}
                 onClick={() => handleAnswer(num)}
-                className="bg-white border-b-[5px] border-pink-200 rounded-2xl py-5 text-4xl font-black text-pink-500 shadow-md active:translate-y-[3px] active:border-b-[1px] active:shadow-sm transition-all duration-75 font-bubble select-none"
+                className="bg-white border-b-[5px] border-pink-200 rounded-2xl py-4 text-3xl font-black text-pink-500 shadow-md active:translate-y-[3px] active:border-b-[1px] active:shadow-sm transition-all duration-75 font-bubble select-none"
               >
                 {num}
               </button>
