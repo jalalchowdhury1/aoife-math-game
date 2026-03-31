@@ -481,19 +481,87 @@ export default function AoifeMathGame() {
         )}
       </div>
 
-      {/* ── Answer buttons (0-10) ── */}
+      {/* ── Numpad ── */}
       <div className="w-full max-w-2xl flex flex-col gap-3">
         {gameState === "playing" && (
-          <div className="grid grid-cols-7 gap-2">
-            {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20].map((num) => (
+          <div className="grid grid-cols-3 gap-2">
+            {/* Row 1: 1, 2, 3 */}
+            {[1, 2, 3].map((num) => (
               <button
                 key={num}
-                onClick={() => handleAnswer(num)}
-                className="bg-white border-b-[5px] border-pink-200 rounded-2xl py-4 text-3xl font-black text-pink-500 shadow-md active:translate-y-[3px] active:border-b-[1px] active:shadow-sm transition-all duration-75 font-bubble select-none"
+                onClick={() => {
+                  const newAnswer = userAnswer === null ? num : (userAnswer * 10 + num);
+                  if (newAnswer <= 20) {
+                    setUserAnswer(newAnswer);
+                  }
+                }}
+                className="bg-white border-b-[5px] border-pink-200 rounded-2xl py-5 text-4xl font-black text-pink-500 shadow-md active:translate-y-[3px] active:border-b-[1px] active:shadow-sm transition-all duration-75 font-bubble select-none"
               >
                 {num}
               </button>
             ))}
+            {/* Row 2: 4, 5, 6 */}
+            {[4, 5, 6].map((num) => (
+              <button
+                key={num}
+                onClick={() => {
+                  const newAnswer = userAnswer === null ? num : (userAnswer * 10 + num);
+                  if (newAnswer <= 20) {
+                    setUserAnswer(newAnswer);
+                  }
+                }}
+                className="bg-white border-b-[5px] border-pink-200 rounded-2xl py-5 text-4xl font-black text-pink-500 shadow-md active:translate-y-[3px] active:border-b-[1px] active:shadow-sm transition-all duration-75 font-bubble select-none"
+              >
+                {num}
+              </button>
+            ))}
+            {/* Row 3: 7, 8, 9 */}
+            {[7, 8, 9].map((num) => (
+              <button
+                key={num}
+                onClick={() => {
+                  const newAnswer = userAnswer === null ? num : (userAnswer * 10 + num);
+                  if (newAnswer <= 20) {
+                    setUserAnswer(newAnswer);
+                  }
+                }}
+                className="bg-white border-b-[5px] border-pink-200 rounded-2xl py-5 text-4xl font-black text-pink-500 shadow-md active:translate-y-[3px] active:border-b-[1px] active:shadow-sm transition-all duration-75 font-bubble select-none"
+              >
+                {num}
+              </button>
+            ))}
+            {/* Row 4: C, 0, ✔️ */}
+            <button
+              onClick={() => setUserAnswer(null)}
+              className="bg-amber-100 border-b-[5px] border-amber-300 rounded-2xl py-5 text-4xl font-black text-amber-600 shadow-md active:translate-y-[3px] active:border-b-[1px] active:shadow-sm transition-all duration-75 font-bubble select-none"
+            >
+              C
+            </button>
+            <button
+              onClick={() => {
+                const newAnswer = userAnswer === null ? 0 : (userAnswer * 10);
+                if (newAnswer <= 20) {
+                  setUserAnswer(newAnswer);
+                }
+              }}
+              className="bg-white border-b-[5px] border-pink-200 rounded-2xl py-5 text-4xl font-black text-pink-500 shadow-md active:translate-y-[3px] active:border-b-[1px] active:shadow-sm transition-all duration-75 font-bubble select-none"
+            >
+              0
+            </button>
+            <button
+              onClick={() => {
+                if (userAnswer !== null) {
+                  handleAnswer(userAnswer);
+                }
+              }}
+              disabled={userAnswer === null}
+              className={`border-b-[5px] rounded-2xl py-5 text-4xl font-black shadow-md active:translate-y-[3px] active:border-b-[1px] active:shadow-sm transition-all duration-75 font-bubble select-none ${userAnswer !== null
+                  ? 'bg-green-100 border-green-300 text-green-600'
+                  : 'bg-gray-100 border-gray-300 text-gray-400'
+                }`}
+            >
+              ✔️
+            </button>
           </div>
         )}
 
