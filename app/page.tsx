@@ -488,9 +488,11 @@ export default function AoifeMathGame() {
       {/* ── Secret admin dot ── */}
       <button
         onClick={() => setShowAdmin(!showAdmin)}
-        className="fixed bottom-2 right-2 w-3 h-3 rounded-full bg-gray-300 opacity-20 hover:opacity-100 transition-opacity z-50"
+        className="fixed bottom-4 right-4 w-8 h-8 rounded-full bg-gray-400 opacity-40 hover:opacity-100 transition-opacity z-50 flex items-center justify-center text-white text-xs font-bold"
         aria-label="Admin panel"
-      />
+      >
+        ⚙️
+      </button>
 
       {/* ── Admin Panel ── */}
       {showAdmin && (
