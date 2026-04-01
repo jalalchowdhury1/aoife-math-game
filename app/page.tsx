@@ -90,6 +90,7 @@ export default function AoifeMathGame() {
   const [sessionTimesShown, setSessionTimesShown] = useState<Record<string, number>>({});
   const [showAdmin, setShowAdmin] = useState(false);
   const [repeatStruggling, setRepeatStruggling] = useState(true);
+  const [onlySelectedEquations, setOnlySelectedEquations] = useState(false);
   const [selectedPatterns, setSelectedPatterns] = useState<string[]>([]);
   const [sessionIncorrectIds, setSessionIncorrectIds] = useState<string[]>([]);
 
@@ -151,39 +152,60 @@ export default function AoifeMathGame() {
     const newQuestions: Question[] = [];
     const usedIds = new Set<string>();
 
-    // Only add struggling patterns if repeat is enabled
-    if (repeatStruggling) {
-      // Priority: use selectedPatterns if user has selected any, otherwise fall back to strugglingPatterns
-      const patternsToUse = selectedPatterns.length > 0 ? selectedPatterns : (loadedProgress.strugglingPatterns || []);
-
-      for (const pattern of patternsToUse) {
+    // If "only selected equations" mode is enabled and user has selected some
+    if (onlySelectedEquations && selectedPatterns.length > 0) {
+      // Repeat selected equations to fill 20 questions (cycling through them)
+      let index = 0;
+      while (newQuestions.length < 20) {
+        const pattern = selectedPatterns[index % selectedPatterns.length];
         const [num1, num2] = pattern.split('+').map(Number);
         if (num1 !== undefined && num2 !== undefined) {
           const q: Question = {
             num1,
             num2,
             answer: num1 + num2,
-            id: pattern
+            id: `${pattern}_${Math.floor(index / selectedPatterns.length)}` // Unique ID for repeats
           };
           newQuestions.push(q);
-          usedIds.add(pattern);
+        }
+        index++;
+      }
+    } else {
+      // Normal mode: add struggling patterns + random questions
+      // Only add struggling patterns if repeat is enabled
+      if (repeatStruggling) {
+        // Priority: use selectedPatterns if user has selected any, otherwise fall back to strugglingPatterns
+        const patternsToUse = selectedPatterns.length > 0 ? selectedPatterns : (loadedProgress.strugglingPatterns || []);
+
+        for (const pattern of patternsToUse) {
+          const [num1, num2] = pattern.split('+').map(Number);
+          if (num1 !== undefined && num2 !== undefined) {
+            const q: Question = {
+              num1,
+              num2,
+              answer: num1 + num2,
+              id: pattern
+            };
+            newQuestions.push(q);
+            usedIds.add(pattern);
+          }
         }
       }
-    }
 
-    // Then fill the rest with random questions
-    while (newQuestions.length < 20) {
-      const q = generateQuestion();
-      if (!usedIds.has(q.id)) {
-        newQuestions.push(q);
-        usedIds.add(q.id);
+      // Then fill the rest with random questions
+      while (newQuestions.length < 20) {
+        const q = generateQuestion();
+        if (!usedIds.has(q.id)) {
+          newQuestions.push(q);
+          usedIds.add(q.id);
+        }
       }
-    }
 
-    // Shuffle questions (struggling patterns will be mixed in)
-    for (let i = newQuestions.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [newQuestions[i], newQuestions[j]] = [newQuestions[j], newQuestions[i]];
+      // Shuffle questions (struggling patterns will be mixed in)
+      for (let i = newQuestions.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [newQuestions[i], newQuestions[j]] = [newQuestions[j], newQuestions[i]];
+      }
     }
 
     setQuestions(newQuestions);
@@ -206,11 +228,11 @@ export default function AoifeMathGame() {
       clearInterval(timerRef.current);
       timerRef.current = null;
     }
-  }, [loadProgress, repeatStruggling, selectedPatterns]);
+  }, [loadProgress, repeatStruggling, selectedPatterns, onlySelectedEquations]);
 
   useEffect(() => {
     initializeGame();
-  }, [initializeGame]);
+  }, [initializeGame, onlySelectedEquations]);
 
   const currentQuestion = questions[currentQuestionIndex];
 
@@ -640,7 +662,7 @@ export default function AoifeMathGame() {
             </div>
 
             {/* Toggle repeat selected */}
-            <div className="flex items-center justify-between bg-blue-50 rounded-xl p-3">
+            <div className="flex items-center justify-between bg-blue-50 rounded-xl p-3 mb-2">
               <span className="font-bold text-blue-600">Repeat selected ({selectedPatterns.length})</span>
               <button
                 onClick={() => {
@@ -651,6 +673,32 @@ export default function AoifeMathGame() {
                 <div className={`w-6 h-6 bg-white rounded-full shadow transition-transform ${repeatStruggling ? 'translate-x-7' : 'translate-x-1'}`} />
               </button>
             </div>
+
+            {/* Toggle only selected equations - NO random questions */}
+            <div className={`flex items-center justify-between rounded-xl p-3 mb-2 ${onlySelectedEquations ? 'bg-purple-100' : 'bg-gray-100'}`}>
+              <div className="flex-1">
+                <span className={`font-bold ${onlySelectedEquations ? 'text-purple-600' : 'text-gray-500'}`}>Only Selected ✨</span>
+                <p className="text-xs text-gray-400 mt-0.5">Only show your picked equations</p>
+              </div>
+              <button
+                onClick={() => {
+                  setOnlySelectedEquations(!onlySelectedEquations);
+                }}
+                className={`w-14 h-8 rounded-full transition-colors ${onlySelectedEquations ? 'bg-purple-500' : 'bg-gray-300'}`}
+              >
+                <div className={`w-6 h-6 bg-white rounded-full shadow transition-transform ${onlySelectedEquations ? 'translate-x-7' : 'translate-x-1'}`} />
+              </button>
+            </div>
+
+            {onlySelectedEquations && selectedPatterns.length === 0 && (
+              <p className="text-xs text-red-500 text-center mb-2">⚠️ Select at least one equation above</p>
+            )}
+
+            {onlySelectedEquations && selectedPatterns.length > 0 && (
+              <p className="text-xs text-purple-500 text-center mb-2">
+                🎯 Will cycle through {selectedPatterns.length} equation{selectedPatterns.length > 1 ? 's' : ''} for 20 questions
+              </p>
+            )}
 
             <p className="text-xs text-gray-400 mt-4 text-center">Tap outside to close</p>
           </div>
