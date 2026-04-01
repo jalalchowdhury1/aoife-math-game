@@ -1,4 +1,5 @@
 "use client";
+// Aoife Math Game - Addition Practice App
 import { useState, useEffect, useCallback, useRef } from "react";
 
 // Declare global confetti
