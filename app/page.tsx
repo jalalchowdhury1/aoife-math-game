@@ -505,7 +505,7 @@ export default function AoifeMathGame() {
   }
 
   return (
-    <div className="h-screen overflow-hidden flex flex-col items-center justify-center px-8 pt-4 pb-4 touch-manipulation">
+    <div className="h-screen overflow-hidden flex flex-col items-center justify-center gap-4 px-8 pt-8 pb-16 touch-manipulation">
       {/* Background blobs */}
       <div className="fixed top-0 left-0 w-72 h-72 bg-pink-300 rounded-full blur-3xl opacity-20 -translate-x-1/2 -translate-y-1/2 pointer-events-none" />
       <div className="fixed bottom-0 right-0 w-80 h-80 bg-purple-300 rounded-full blur-3xl opacity-20 translate-x-1/3 translate-y-1/3 pointer-events-none" />
@@ -526,10 +526,10 @@ export default function AoifeMathGame() {
       </div>
 
       {/* ── Equation card ── */}
-      <div className="w-full max-w-2xl bg-white/85 backdrop-blur-md rounded-3xl shadow-[0_12px_40px_rgba(244,63,94,0.12)] border-4 border-white px-10 py-7">
+      <div className="w-full max-w-2xl bg-white/85 backdrop-blur-md rounded-3xl shadow-[0_12px_40px_rgba(244,63,94,0.12)] border-4 border-white px-10 py-5">
 
         {/* One-line equation */}
-        <div className="flex items-center justify-center gap-6 mb-5">
+        <div className="flex items-center justify-center gap-6 mb-4">
           <span className="text-6xl font-black text-pink-600 tabular-nums tracking-tight drop-shadow-sm">
             {currentQuestion?.num1}
           </span>
@@ -687,7 +687,7 @@ export default function AoifeMathGame() {
       )}
 
       {/* ── Numpad ── */}
-      <div className="w-full max-w-2xl flex flex-col gap-3">
+      <div className="w-full max-w-2xl flex flex-col gap-4">
         {gameState === "playing" && (
           <div className="grid grid-cols-3 gap-2">
             {/* Row 1: 1, 2, 3 */}
@@ -700,7 +700,7 @@ export default function AoifeMathGame() {
                     setUserAnswer(newAnswer);
                   }
                 }}
-                className="bg-white border-b-[5px] border-pink-200 rounded-2xl py-5 text-4xl font-black text-pink-500 shadow-md active:translate-y-[3px] active:border-b-[1px] active:shadow-sm transition-all duration-75 font-bubble select-none"
+                className="bg-white border-b-[6px] border-pink-200 rounded-[2rem] py-5 text-4xl font-black text-pink-500 shadow-lg active:translate-y-[4px] active:border-b-[1px] active:shadow-sm transition-all duration-75 font-bubble select-none"
               >
                 {num}
               </button>
@@ -715,7 +715,7 @@ export default function AoifeMathGame() {
                     setUserAnswer(newAnswer);
                   }
                 }}
-                className="bg-white border-b-[5px] border-pink-200 rounded-2xl py-5 text-4xl font-black text-pink-500 shadow-md active:translate-y-[3px] active:border-b-[1px] active:shadow-sm transition-all duration-75 font-bubble select-none"
+                className="bg-white border-b-[6px] border-pink-200 rounded-[2rem] py-5 text-4xl font-black text-pink-500 shadow-lg active:translate-y-[4px] active:border-b-[1px] active:shadow-sm transition-all duration-75 font-bubble select-none"
               >
                 {num}
               </button>
@@ -730,7 +730,7 @@ export default function AoifeMathGame() {
                     setUserAnswer(newAnswer);
                   }
                 }}
-                className="bg-white border-b-[5px] border-pink-200 rounded-2xl py-5 text-4xl font-black text-pink-500 shadow-md active:translate-y-[3px] active:border-b-[1px] active:shadow-sm transition-all duration-75 font-bubble select-none"
+                className="bg-white border-b-[6px] border-pink-200 rounded-[2rem] py-5 text-4xl font-black text-pink-500 shadow-lg active:translate-y-[4px] active:border-b-[1px] active:shadow-sm transition-all duration-75 font-bubble select-none"
               >
                 {num}
               </button>
@@ -738,7 +738,7 @@ export default function AoifeMathGame() {
             {/* Row 4: C, 0, ✔️ */}
             <button
               onClick={() => setUserAnswer(null)}
-              className="bg-amber-100 border-b-[5px] border-amber-300 rounded-2xl py-5 text-4xl font-black text-amber-600 shadow-md active:translate-y-[3px] active:border-b-[1px] active:shadow-sm transition-all duration-75 font-bubble select-none"
+              className="bg-amber-100 border-b-[6px] border-amber-300 rounded-[2rem] py-5 text-4xl font-black text-amber-600 shadow-lg active:translate-y-[4px] active:border-b-[1px] active:shadow-sm transition-all duration-75 font-bubble select-none"
             >
               C
             </button>
@@ -749,7 +749,7 @@ export default function AoifeMathGame() {
                   setUserAnswer(newAnswer);
                 }
               }}
-              className="bg-white border-b-[5px] border-pink-200 rounded-2xl py-5 text-4xl font-black text-pink-500 shadow-md active:translate-y-[3px] active:border-b-[1px] active:shadow-sm transition-all duration-75 font-bubble select-none"
+              className="bg-white border-b-[6px] border-pink-200 rounded-[2rem] py-5 text-4xl font-black text-pink-500 shadow-lg active:translate-y-[4px] active:border-b-[1px] active:shadow-md transition-all duration-75 font-bubble select-none"
             >
               0
             </button>
@@ -760,7 +760,7 @@ export default function AoifeMathGame() {
                 }
               }}
               disabled={userAnswer === null}
-              className={`border-b-[5px] rounded-2xl py-5 text-4xl font-black shadow-md active:translate-y-[3px] active:border-b-[1px] active:shadow-sm transition-all duration-75 font-bubble select-none ${userAnswer !== null
+              className={`border-b-[6px] rounded-[2rem] py-5 text-4xl font-black shadow-lg active:translate-y-[4px] active:border-b-[1px] active:shadow-md transition-all duration-75 font-bubble select-none ${userAnswer !== null
                 ? 'bg-green-100 border-green-300 text-green-600'
                 : 'bg-gray-100 border-gray-300 text-gray-400'
                 }`}
