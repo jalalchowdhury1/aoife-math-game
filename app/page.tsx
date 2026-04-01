@@ -489,16 +489,6 @@ export default function AoifeMathGame() {
               {score}<span className="text-3xl text-purple-400"> / 20</span>
             </p>
           </div>
-          <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl p-4 mb-4 border-2 border-blue-100">
-            <p className="text-sm font-bold text-blue-400 uppercase tracking-widest mb-1">Current Time</p>
-            <p className="text-4xl font-black text-blue-600">{formatTime(elapsedTime)}</p>
-          </div>
-          {progress.bestTime && (
-            <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-3 mb-6 border-2 border-green-100">
-              <p className="text-sm font-bold text-green-400 uppercase tracking-widest mb-1">Best Time Ever</p>
-              <p className="text-2xl font-black text-green-600">{formatTime(progress.bestTime)}</p>
-            </div>
-          )}
           <div className="flex justify-center gap-6 text-sm font-bold mb-8">
             <span className="text-green-500">✓ {progress.totalCorrect} correct</span>
             <span className="text-pink-400">✗ {progress.totalIncorrect} wrong</span>
@@ -515,13 +505,13 @@ export default function AoifeMathGame() {
   }
 
   return (
-    <div className="h-screen overflow-hidden flex flex-col items-center justify-between px-8 pt-6 pb-5 touch-manipulation">
+    <div className="h-screen overflow-hidden flex flex-col items-center justify-center px-8 pt-4 pb-4 touch-manipulation">
       {/* Background blobs */}
       <div className="fixed top-0 left-0 w-72 h-72 bg-pink-300 rounded-full blur-3xl opacity-20 -translate-x-1/2 -translate-y-1/2 pointer-events-none" />
       <div className="fixed bottom-0 right-0 w-80 h-80 bg-purple-300 rounded-full blur-3xl opacity-20 translate-x-1/3 translate-y-1/3 pointer-events-none" />
       <div className="fixed top-1/2 right-0 w-48 h-48 bg-blue-200 rounded-full blur-3xl opacity-20 pointer-events-none" />
 
-      {/* ── Progress bar with timer ── */}
+      {/* ── Progress bar ── */}
       <div className="w-full max-w-2xl flex items-center gap-4">
         <span className="text-pink-500 font-black text-lg tabular-nums whitespace-nowrap">
           {currentQuestionIndex + 1}<span className="text-pink-300"> / 20</span>
@@ -533,16 +523,6 @@ export default function AoifeMathGame() {
           />
         </div>
         <span className="text-purple-500 font-black text-lg tabular-nums whitespace-nowrap">{score} ⭐</span>
-        {/* Stopwatch display */}
-        <div className={`flex items-center gap-2 px-4 py-1 rounded-full ${timerStarted ? 'bg-blue-100 border-2 border-blue-300' : 'bg-gray-100 border-2 border-gray-200'}`}>
-          <svg className="w-5 h-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <circle cx="12" cy="12" r="10" strokeWidth="2" />
-            <path strokeLinecap="round" strokeWidth="2" d="M12 6v6l4 2" />
-          </svg>
-          <span className={`text-lg font-black tabular-nums ${timerStarted ? 'text-blue-600' : 'text-gray-400'}`}>
-            {timerStarted ? formatTime(elapsedTime) : "0.0s"}
-          </span>
-        </div>
       </div>
 
       {/* ── Equation card ── */}
