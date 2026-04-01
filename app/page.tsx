@@ -44,15 +44,13 @@ type MessageType = "none" | "try-again" | "correct" | "wrong" | "show-answer";
 
 
 const generateQuestion = (): Question => {
-  // Generate 3-digit addition where BOTH numbers are 3-digits, result ≤ 1100
-  const num1 = Math.floor(Math.random() * 900) + 100; // 100-999 (3 digits)
-  // Ensure num2 is also 3 digits (100-999) and result ≤ 1100
-  const maxNum2 = Math.min(999, 1100 - num1);
-  const minNum2 = Math.max(100, 1100 - 999); // At least 101 if we want result under 1100
-  const num2 = Math.floor(Math.random() * (maxNum2 - minNum2 + 1)) + minNum2;
-  const answer = num1 + num2;
+  // Generate subtraction where both num1 and num2 are up to 20
+  // num1 must be >= num2 so answer is non-negative
+  const num1 = Math.floor(Math.random() * 21); // 0-20
+  const num2 = Math.floor(Math.random() * (num1 + 1)); // 0 to num1
+  const answer = num1 - num2;
 
-  return { num1, num2, answer, id: `${num1}+${num2}` };
+  return { num1, num2, answer, id: `${num1}-${num2}` };
 };
 
 const PROGRESS_KEY = "aoife-math-subtraction-progress";
@@ -147,7 +145,7 @@ export default function AoifeMathGame() {
     const loadedProgress = loadProgress();
     setProgress(loadedProgress);
 
-    // Generate 20 addition questions
+    // Generate 20 subtraction questions
     const newQuestions: Question[] = [];
     const usedIds = new Set<string>();
 
@@ -157,12 +155,12 @@ export default function AoifeMathGame() {
       const patternsToUse = selectedPatterns.length > 0 ? selectedPatterns : (loadedProgress.strugglingPatterns || []);
 
       for (const pattern of patternsToUse) {
-        const [num1, num2] = pattern.split('+').map(Number);
-        if (num1 !== undefined && num2 !== undefined) {
+        const [num1, num2] = pattern.split('-').map(Number);
+        if (num1 !== undefined && num2 !== undefined && num1 >= num2) {
           const q: Question = {
             num1,
             num2,
-            answer: num1 + num2,
+            answer: num1 - num2,
             id: pattern
           };
           newQuestions.push(q);
@@ -530,7 +528,7 @@ export default function AoifeMathGame() {
           <span className="text-6xl font-black text-pink-600 tabular-nums tracking-tight drop-shadow-sm">
             {currentQuestion?.num1}
           </span>
-          <span className="text-4xl font-black text-blue-400">+</span>
+          <span className="text-4xl font-black text-blue-400">−</span>
           <span className="text-6xl font-black text-purple-600 tabular-nums tracking-tight drop-shadow-sm">
             {currentQuestion?.num2}
           </span>
@@ -593,7 +591,7 @@ export default function AoifeMathGame() {
               <div className="bg-pink-50 rounded-xl p-3 space-y-2 max-h-60 overflow-y-auto">
                 {progress.strugglingPatterns.length > 0 ? (
                   progress.strugglingPatterns.map((pattern) => {
-                    const [n1, n2] = pattern.split('+').map(Number);
+                    const [n1, n2] = pattern.split('-').map(Number);
                     const isSelected = selectedPatterns.includes(pattern);
                     const stats = progress.questionStats[pattern];
                     const wasWrong = sessionIncorrectIds.includes(pattern);
@@ -612,7 +610,7 @@ export default function AoifeMathGame() {
                         }}
                       >
                         <div className="flex justify-between items-center">
-                          <span className="text-lg font-black text-pink-600">{n1} + {n2} = {n1 + n2}</span>
+                          <span className="text-lg font-black text-pink-600">{n1} − {n2} = {n1 - n2}</span>
                           <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isSelected ? 'bg-green-500' : 'bg-gray-300'}`}>
                             {isSelected ? '✓' : ''}
                           </div>
