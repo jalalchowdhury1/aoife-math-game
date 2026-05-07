@@ -293,7 +293,7 @@ export default function AoifeMathGame() {
       };
 
       // If this is the last question, stop timer
-      if (currentQuestionIndex === 19) {
+      if (currentQuestionIndex === 4) {
         stopTimer();
       }
 
@@ -301,7 +301,7 @@ export default function AoifeMathGame() {
         // Update question start time for next question
         questionStartTimeRef.current = Date.now();
 
-        if (currentQuestionIndex < 19) {
+        if (currentQuestionIndex < 4) {
           setCurrentQuestionIndex((prev) => prev + 1);
           setUserAnswer(null);
           setGameState("playing");
@@ -350,7 +350,7 @@ export default function AoifeMathGame() {
         setShowAnswer(true);
 
         // If this is the last question, stop timer
-        if (currentQuestionIndex === 19) {
+        if (currentQuestionIndex === 4) {
           stopTimer();
         }
 
@@ -371,7 +371,7 @@ export default function AoifeMathGame() {
             timesShownInCurrentSession: (existing.timesShownInCurrentSession || 0) + 1
           };
 
-          if (currentQuestionIndex < 19) {
+          if (currentQuestionIndex < 4) {
             setCurrentQuestionIndex((prev) => prev + 1);
             setUserAnswer(null);
             setGameState("playing");
