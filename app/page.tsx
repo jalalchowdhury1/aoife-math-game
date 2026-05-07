@@ -695,7 +695,7 @@ export default function AoifeMathGame() {
                 key={num}
                 onClick={() => {
                   const newAnswer = userAnswer === null ? num : (userAnswer * 10 + num);
-                  if (newAnswer <= 1100) {
+                  if (newAnswer <= 13000) {
                     setUserAnswer(newAnswer);
                   }
                 }}
@@ -710,7 +710,7 @@ export default function AoifeMathGame() {
                 key={num}
                 onClick={() => {
                   const newAnswer = userAnswer === null ? num : (userAnswer * 10 + num);
-                  if (newAnswer <= 1100) {
+                  if (newAnswer <= 13000) {
                     setUserAnswer(newAnswer);
                   }
                 }}
@@ -725,7 +725,7 @@ export default function AoifeMathGame() {
                 key={num}
                 onClick={() => {
                   const newAnswer = userAnswer === null ? num : (userAnswer * 10 + num);
-                  if (newAnswer <= 1100) {
+                  if (newAnswer <= 13000) {
                     setUserAnswer(newAnswer);
                   }
                 }}
@@ -744,7 +744,7 @@ export default function AoifeMathGame() {
             <button
               onClick={() => {
                 const newAnswer = userAnswer === null ? 0 : (userAnswer * 10);
-                if (newAnswer <= 1100) {
+                if (newAnswer <= 13000) {
                   setUserAnswer(newAnswer);
                 }
               }}
