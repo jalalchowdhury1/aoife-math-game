@@ -45,11 +45,10 @@ type MessageType = "none" | "try-again" | "correct" | "wrong" | "show-answer";
 
 
 const generateQuestion = (): Question => {
-  // Generate 3-digit addition where BOTH numbers are 3-digits, result ≤ 1100
-  const num1 = Math.floor(Math.random() * 900) + 100; // 100-999 (3 digits)
-  // Ensure num2 is also 3 digits (100-999) and result ≤ 1100
-  const maxNum2 = Math.min(999, 1100 - num1);
-  const minNum2 = Math.max(100, 1100 - 999); // At least 101 if we want result under 1100
+  // Generate 4-digit addition where BOTH numbers are 4-digits, result ≤ 13000
+  const num1 = Math.floor(Math.random() * 9000) + 1000; // 1000-9999 (4 digits)
+  const maxNum2 = Math.min(9999, 13000 - num1);
+  const minNum2 = 1000;
   const num2 = Math.floor(Math.random() * (maxNum2 - minNum2 + 1)) + minNum2;
   const answer = num1 + num2;
 
@@ -149,15 +148,15 @@ export default function AoifeMathGame() {
     const loadedProgress = loadProgress();
     setProgress(loadedProgress);
 
-    // Generate 20 addition questions
+    // Generate 5 addition questions
     const newQuestions: Question[] = [];
     const usedIds = new Set<string>();
 
     // If "only selected equations" mode is enabled and user has selected some
     if (onlySelectedEquations && selectedPatterns.length > 0) {
-      // Repeat selected equations to fill 20 questions (cycling through them)
+      // Repeat selected equations to fill 5 questions (cycling through them)
       let index = 0;
-      while (newQuestions.length < 20) {
+      while (newQuestions.length < 5) {
         const pattern = selectedPatterns[index % selectedPatterns.length];
         const [num1, num2] = pattern.split('+').map(Number);
         if (num1 !== undefined && num2 !== undefined) {
@@ -194,7 +193,7 @@ export default function AoifeMathGame() {
       }
 
       // Then fill the rest with random questions
-      while (newQuestions.length < 20) {
+      while (newQuestions.length < 5) {
         const q = generateQuestion();
         if (!usedIds.has(q.id)) {
           newQuestions.push(q);
@@ -472,9 +471,9 @@ export default function AoifeMathGame() {
   if (gameState === "ended") {
     let emoji = "";
     let subtitle = "";
-    if (score === 20) { emoji = "🏆"; subtitle = "You got every single one right!"; }
-    else if (score >= 16) { emoji = "⭐"; subtitle = "You're getting really good at this!"; }
-    else if (score >= 12) { emoji = "💜"; subtitle = "Practice makes perfect!"; }
+    if (score === 5) { emoji = "🏆"; subtitle = "You got every single one right!"; }
+    else if (score >= 4) { emoji = "⭐"; subtitle = "You're getting really good at this!"; }
+    else if (score >= 3) { emoji = "💜"; subtitle = "Practice makes perfect!"; }
     else { emoji = "🌸"; subtitle = "Keep trying, you're improving!"; }
 
     return (
@@ -486,7 +485,7 @@ export default function AoifeMathGame() {
           <div className="bg-gradient-to-br from-pink-50 to-purple-50 rounded-2xl p-6 mb-6 border-2 border-pink-100">
             <p className="text-sm font-bold text-purple-400 uppercase tracking-widest mb-1">Score</p>
             <p className="text-7xl font-black text-pink-600">
-              {score}<span className="text-3xl text-purple-400"> / 20</span>
+              {score}<span className="text-3xl text-purple-400"> / 5</span>
             </p>
           </div>
           <div className="flex justify-center gap-6 text-sm font-bold mb-8">
@@ -514,12 +513,12 @@ export default function AoifeMathGame() {
       {/* ── Progress bar ── */}
       <div className="w-full max-w-2xl flex items-center gap-4">
         <span className="text-pink-500 font-black text-lg tabular-nums whitespace-nowrap">
-          {currentQuestionIndex + 1}<span className="text-pink-300"> / 20</span>
+          {currentQuestionIndex + 1}<span className="text-pink-300"> / 5</span>
         </span>
         <div className="flex-1 h-4 bg-white/70 rounded-full overflow-hidden shadow-inner border-2 border-pink-100">
           <div
             className="h-full bg-gradient-to-r from-pink-400 via-fuchsia-400 to-purple-400 rounded-full transition-all duration-700 ease-out"
-            style={{ width: `${((currentQuestionIndex + 1) / 20) * 100}%` }}
+            style={{ width: `${((currentQuestionIndex + 1) / 5) * 100}%` }}
           />
         </div>
         <span className="text-purple-500 font-black text-lg tabular-nums whitespace-nowrap">{score} ⭐</span>
@@ -677,7 +676,7 @@ export default function AoifeMathGame() {
 
             {onlySelectedEquations && selectedPatterns.length > 0 && (
               <p className="text-xs text-purple-500 text-center mb-2">
-                🎯 Will cycle through {selectedPatterns.length} equation{selectedPatterns.length > 1 ? 's' : ''} for 20 questions
+                🎯 Will cycle through {selectedPatterns.length} equation{selectedPatterns.length > 1 ? 's' : ''} for 5 questions
               </p>
             )}
 
